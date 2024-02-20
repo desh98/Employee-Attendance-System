@@ -1,48 +1,50 @@
 import 'package:flutter/material.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const MyAppBar(
-      {Key? key, required this.isSideBarOpen, required this.toggleSideBar})
-      : super(key: key);
-
-  final bool isSideBarOpen;
-  final VoidCallback toggleSideBar;
+  const MyAppBar({super.key});
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(80);
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      leading: IconButton(
-        icon: isSideBarOpen ? Icon(Icons.arrow_back) : Icon(Icons.menu),
-        onPressed: toggleSideBar,
-      ),
-      actions: [
-        // Dark mode icon
-        IconButton(
-          icon: Icon(Icons.brightness_6),
-          onPressed: () {
-            // Toggle dark mode
-          },
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: AppBar(
+        leading: Image.asset(
+          'assets/logo.png',
+          width: 25,
+          height: 25,
         ),
-        // Full screen icon
-        IconButton(
-          icon: Icon(Icons.fullscreen),
-          onPressed: () {
-            // Toggle full screen
-          },
-        ),
-        // Embryo logo
-        Padding(
-          padding: const EdgeInsets.only(right: 8.0),
-          child: Image.asset(
-            'assets/logo.png',
-            width: 30,
-            height: 30,
+        actions: [
+          // Dark mode icon
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.purple[50],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.dark_mode_rounded),
+              color: Colors.purple,
+              onPressed: () {},
+            ),
           ),
-        ),
-      ],
+
+          SizedBox(width: 5),
+          // Logout button
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.purple[50],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.logout),
+              color: Colors.purple,
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

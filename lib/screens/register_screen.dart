@@ -36,9 +36,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Register'),
-      ),
       body: Padding(
         padding:
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -70,6 +67,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       : Image.file(File(_capturedImage!.path)),
                 ),
               ),
+
+              // // Camera preview
+              // Center(
+              //   child: Container(
+              //     height: 500,
+              //     child: _capturedImage == null
+              //         ? Image.network(
+              //             'https://w0.peakpx.com/wallpaper/294/364/HD-wallpaper-angelina-jolie-actress-face-portrait-girls.jpg')
+              //         : Image.file(File(_capturedImage!.path)),
+              //   ),
+              // ),
 
               // Buttons
               Column(
@@ -151,9 +159,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Future<void> _showResponseDialog(String message) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Registration Status'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(message),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _registerUser() async {
     // Check if the user ID and image are provided
     if (_userIdController.text.isEmpty || _capturedImage == null) {
+      _showResponseDialog('User ID or image not provided.');
       return;
     }
 
@@ -161,46 +197,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final String userId = _userIdController.text;
     final File imageFile = File(_capturedImage!.path);
 
+    // // Download the image from the internet
+    // final String imageUrl =
+    //     'https://w0.peakpx.com/wallpaper/294/364/HD-wallpaper-angelina-jolie-actress-face-portrait-girls.jpg';
+
+    // http.Response imageResponse = await http.get(Uri.parse(imageUrl));
+
+    // // Check if the image was downloaded successfully
+    // if (imageResponse.statusCode != 200) {
+    //   _showResponseDialog('Failed to download image.');
+    //   return;
+    // }
+
     // Create a multipart request
     var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
     // Add headers
     request.headers['api'] = 'abcd';
     request.headers['user'] = 'slt';
-    request.headers['nic'] = '456';
+    request.headers['nic'] = '123';
+
+    // Add user ID field to the request
+    request.fields['user'] = userId;
+
+    // // Add image file to the request
+    // request.files.add(http.MultipartFile.fromBytes(
+    //   'image',
+    //   imageResponse.bodyBytes,
+    //   filename: 'image.jpg',
+    // ));
 
     // Add fields and files to the request
-    request.fields['user'] = userId;
     request.files.add(http.MultipartFile.fromBytes(
       'image',
       await imageFile.readAsBytes(),
       filename: imageFile.path.split('/').last,
     ));
+
     // Send the request
     http.StreamedResponse response = await request.send();
 
     // Get the response body
     String responseBody = await response.stream.bytesToString();
 
+    // Parse the response JSON
+    Map<String, dynamic> jsonResponse = json.decode(responseBody);
+
+    // Get the message from the response
+    String message = jsonResponse['msg'];
+
     // Check the response status
     if (response.statusCode == 200) {
-      // Parse the response JSON
-      Map<String, dynamic> jsonResponse = json.decode(responseBody);
-
-      // Check if registration is successful
-      if (jsonResponse.containsKey("msg") &&
-          jsonResponse["msg"] == "Face Not Detected.") {
-        // Handle case where face was not detected
-        print('Face not detected during registration');
-      } else {
-        // Registration successful
-        // Handle the response data as needed
-        print('Registration successful: $responseBody');
-      }
+      // Registration successful
+      _showResponseDialog('$message');
     } else {
       // Registration failed
-      // Handle the error response
-      print('Registration failed: $responseBody');
+      _showResponseDialog('$message');
     }
   }
 }
