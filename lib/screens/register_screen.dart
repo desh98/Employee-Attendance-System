@@ -1,9 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter/widgets.dart';
+import 'package:ientrada_new/constants/api.dart';
 import 'package:ientrada_new/main.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
@@ -17,7 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late CameraController _controller;
   XFile? _capturedImage;
   final TextEditingController _userIdController = TextEditingController();
-  final String apiUrl = 'https://ientrada.raccoon-ai.io/api/register_face';
+  final String apiUrl =
+      '${ApiConstants.apiUrl}${ApiConstants.registerFaceEndpoint}';
 
   @override
   void initState() {
@@ -30,6 +35,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     await _controller.initialize();
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    if (!_controller.value.isInitialized) {
+      return;
+    }
+    if (_controller.value.isTakingPicture) {
+      return;
+    }
+
+    try {
+      await _controller.setFlashMode(FlashMode.auto);
+      final XFile file = await _controller.takePicture();
+
+      setState(() {
+        _capturedImage = file;
+      });
+    } on CameraException catch (e) {
+      debugPrint("Error occurred while taking picture : $e");
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _capturedImage = XFile(pickedFile.path);
+      });
     }
   }
 
@@ -68,17 +104,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
 
-              // // Camera preview
-              // Center(
-              //   child: Container(
-              //     height: 500,
-              //     child: _capturedImage == null
-              //         ? Image.network(
-              //             'https://w0.peakpx.com/wallpaper/294/364/HD-wallpaper-angelina-jolie-actress-face-portrait-girls.jpg')
-              //         : Image.file(File(_capturedImage!.path)),
-              //   ),
-              // ),
-
               // Buttons
               Column(
                 children: [
@@ -86,28 +111,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Center(
                     child: Container(
                       child: MaterialButton(
-                        onPressed: () async {
-                          if (!_controller.value.isInitialized) {
-                            return;
-                          }
-                          if (_controller.value.isTakingPicture) {
-                            return;
-                          }
-
-                          try {
-                            await _controller.setFlashMode(FlashMode.auto);
-                            final XFile file = await _controller.takePicture();
-                            setState(() {
-                              _capturedImage = file;
-                            });
-                          } on CameraException catch (e) {
-                            debugPrint(
-                                "Error occurred while taking picture : $e");
-                          }
-                        },
+                        onPressed: _pickImageFromCamera,
                         color: Colors.purple,
                         child: const Text(
                           'Capture Image',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Pick image from gallery button
+                  Center(
+                    child: Container(
+                      child: MaterialButton(
+                        onPressed: _pickImageFromGallery,
+                        color: Colors.purple,
+                        child: const Text(
+                          'Pick Image from Gallery',
                           style: TextStyle(
                             color: Colors.white,
                           ),
@@ -137,7 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
 
-                  // Register button
+                  // Verify button
                   MaterialButton(
                     onPressed: () {
                       _registerUser();
@@ -157,6 +180,75 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _registerUser() async {
+    // Check if the user ID is provided
+    if (_userIdController.text.isEmpty) {
+      _showResponseDialog('User ID not provided.');
+      return;
+    }
+
+    if (_capturedImage == null) {
+      _showResponseDialog('Please capture an image first.');
+      return;
+    }
+
+    // Prepare the request body
+    final String userId = _userIdController.text;
+
+    try {
+      // Resize image to a consistent resolution
+      final File resizedImageFile =
+          await _resizeImage(File(_capturedImage!.path));
+
+      // Create a multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+      // Add headers
+      request.headers['api'] = ApiConstants.apiKey;
+      request.headers['user'] = ApiConstants.user;
+      request.headers['nic'] = _userIdController.text;
+
+      // Add user ID field to the request
+      request.fields['user'] = userId;
+
+      // Add image file to the request
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        resizedImageFile.path,
+      ));
+
+      // Send the request
+      final sendResponse = await request.send();
+
+      // Get the response body
+      final responseBody = await sendResponse.stream.bytesToString();
+
+      // Parse the response JSON
+      final jsonResponse = json.decode(responseBody);
+
+      // Get the message from the response
+      final message = jsonResponse['msg'];
+
+      // Check the response status
+      if (sendResponse.statusCode == 200) {
+        // Registration successful
+        _showResponseDialog('$message');
+        // Reset _capturedImage to null after successful registration
+        setState(() {
+          _capturedImage = null;
+        });
+        // Delete the image file after sending it to the API
+        await resizedImageFile.delete();
+      } else {
+        // Registration failed
+        _showResponseDialog('$message');
+      }
+    } catch (e) {
+      // Handle any errors that occurred during the process
+      _showResponseDialog('Error: $e');
+    }
   }
 
   Future<void> _showResponseDialog(String message) async {
@@ -186,73 +278,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> _registerUser() async {
-    // Check if the user ID and image are provided
-    if (_userIdController.text.isEmpty || _capturedImage == null) {
-      _showResponseDialog('User ID or image not provided.');
-      return;
-    }
+  Future<File> _resizeImage(File imageFile) async {
+    try {
+      // Check if the image file exists
+      if (!(await imageFile.exists())) {
+        throw Exception('Image file does not exist.');
+      }
 
-    // Prepare the request body
-    final String userId = _userIdController.text;
-    final File imageFile = File(_capturedImage!.path);
+      // Read image bytes
+      final Uint8List bytes = await imageFile.readAsBytes();
 
-    // // Download the image from the internet
-    // final String imageUrl =
-    //     'https://w0.peakpx.com/wallpaper/294/364/HD-wallpaper-angelina-jolie-actress-face-portrait-girls.jpg';
+      // Decode image
+      img.Image? image = img.decodeImage(bytes);
+      if (image == null) {
+        throw Exception('Failed to decode image.');
+      }
 
-    // http.Response imageResponse = await http.get(Uri.parse(imageUrl));
+      // Resize image
+      final img.Image resizedImage = img.copyResize(image, width: 800);
 
-    // // Check if the image was downloaded successfully
-    // if (imageResponse.statusCode != 200) {
-    //   _showResponseDialog('Failed to download image.');
-    //   return;
-    // }
+      // Write resized image to a file
+      final File resizedFile =
+          File('${(await getTemporaryDirectory()).path}/resized_image.jpg');
+      await resizedFile.writeAsBytes(img.encodeJpg(resizedImage));
 
-    // Create a multipart request
-    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-
-    // Add headers
-    request.headers['api'] = 'abcd';
-    request.headers['user'] = 'slt';
-    request.headers['nic'] = '123';
-
-    // Add user ID field to the request
-    request.fields['user'] = userId;
-
-    // // Add image file to the request
-    // request.files.add(http.MultipartFile.fromBytes(
-    //   'image',
-    //   imageResponse.bodyBytes,
-    //   filename: 'image.jpg',
-    // ));
-
-    // Add fields and files to the request
-    request.files.add(http.MultipartFile.fromBytes(
-      'image',
-      await imageFile.readAsBytes(),
-      filename: imageFile.path.split('/').last,
-    ));
-
-    // Send the request
-    http.StreamedResponse response = await request.send();
-
-    // Get the response body
-    String responseBody = await response.stream.bytesToString();
-
-    // Parse the response JSON
-    Map<String, dynamic> jsonResponse = json.decode(responseBody);
-
-    // Get the message from the response
-    String message = jsonResponse['msg'];
-
-    // Check the response status
-    if (response.statusCode == 200) {
-      // Registration successful
-      _showResponseDialog('$message');
-    } else {
-      // Registration failed
-      _showResponseDialog('$message');
+      return resizedFile;
+    } catch (e) {
+      // Handle errors and return an appropriate error message
+      if (e is FileSystemException) {
+        // File system error (e.g., image file not found)
+        throw Exception('Error accessing image file: $e');
+      } else {
+        // Other errors
+        throw Exception('Error resizing image: $e');
+      }
     }
   }
+
+  // Future<File> _resizeImage(File imageFile) async {
+  //   // Read image bytes
+  //   final Uint8List bytes = await imageFile.readAsBytes();
+
+  //   // Decode image
+  //   img.Image? image = img.decodeImage(bytes);
+  //   if (image == null) {
+  //     throw Exception('Failed to decode image.');
+  //   }
+
+  //   // Resize image
+  //   final img.Image resizedImage = img.copyResize(image, width: 800);
+
+  //   // Write resized image to a file
+  //   final File resizedFile =
+  //       File('${(await getTemporaryDirectory()).path}/resized_image.jpg');
+  //   await resizedFile.writeAsBytes(img.encodeJpg(resizedImage));
+
+  //   return resizedFile;
+  // }
 }

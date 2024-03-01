@@ -2,8 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
+import 'package:ientrada_new/constants/api.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:ientrada_new/main.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 
 class VerifyScreen extends StatefulWidget {
   const VerifyScreen({Key? key}) : super(key: key);
@@ -15,9 +20,8 @@ class VerifyScreen extends StatefulWidget {
 class _VerifyScreenState extends State<VerifyScreen> {
   late CameraController _controller;
   XFile? _capturedImage;
-  final String apiUrl = 'https://ientrada.raccoon-ai.io/api/verify_face';
-  final String apiKey = 'abcd';
-  final String user = 'slt';
+  final String apiUrl =
+      '${ApiConstants.apiUrl}${ApiConstants.verifyFaceEndpoint}';
 
   @override
   void initState() {
@@ -30,6 +34,37 @@ class _VerifyScreenState extends State<VerifyScreen> {
     await _controller.initialize();
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    if (!_controller.value.isInitialized) {
+      return;
+    }
+    if (_controller.value.isTakingPicture) {
+      return;
+    }
+
+    try {
+      await _controller.setFlashMode(FlashMode.auto);
+      final XFile file = await _controller.takePicture();
+
+      setState(() {
+        _capturedImage = file; // Update _capturedImage with the new image
+      });
+    } on CameraException catch (e) {
+      debugPrint("Error occurred while taking picture : $e");
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _capturedImage = XFile(pickedFile.path);
+      });
     }
   }
 
@@ -52,17 +87,6 @@ class _VerifyScreenState extends State<VerifyScreen> {
                 ),
               ),
 
-              // // Camera preview
-              // Center(
-              //   child: Container(
-              //     height: 500,
-              //     child: _capturedImage == null
-              //         ? Image.network(
-              //             'https://userscontent2.emaze.com/images/df500937-33a0-41db-bc2d-94b9defdbb62/ba63bc5c-b364-4317-bfd6-c843b5275680.jpg')
-              //         : Image.file(File(_capturedImage!.path)),
-              //   ),
-              // ),
-
               // Buttons
               Column(
                 children: [
@@ -70,28 +94,26 @@ class _VerifyScreenState extends State<VerifyScreen> {
                   Center(
                     child: Container(
                       child: MaterialButton(
-                        onPressed: () async {
-                          if (!_controller.value.isInitialized) {
-                            return;
-                          }
-                          if (_controller.value.isTakingPicture) {
-                            return;
-                          }
-
-                          try {
-                            await _controller.setFlashMode(FlashMode.auto);
-                            final XFile file = await _controller.takePicture();
-                            setState(() {
-                              _capturedImage = file;
-                            });
-                          } on CameraException catch (e) {
-                            debugPrint(
-                                "Error occurred while taking picture : $e");
-                          }
-                        },
+                        onPressed: _pickImageFromCamera,
                         color: Colors.purple,
                         child: const Text(
                           'Capture Image',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Pick image from gallery button
+                  Center(
+                    child: Container(
+                      child: MaterialButton(
+                        onPressed: _pickImageFromGallery,
+                        color: Colors.purple,
+                        child: const Text(
+                          'Pick Image from Gallery',
                           style: TextStyle(
                             color: Colors.white,
                           ),
@@ -146,7 +168,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
   Future<void> _showResponseDialog(String message) async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // user must tap button!
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Verification Status'),
@@ -171,60 +193,78 @@ class _VerifyScreenState extends State<VerifyScreen> {
   }
 
   Future<void> _verifyUser() async {
-    // Check if the image is captured
     if (_capturedImage == null) {
-      _showResponseDialog('Image not captured.');
+      _showResponseDialog('Please capture an image first.');
       return;
     }
+    try {
+      // Resize image to a consistent resolution
+      final File resizedImageFile =
+          await _resizeImage(File(_capturedImage!.path));
 
-    // Prepare the request body
-    final File imageFile = File(_capturedImage!.path);
+      // Create a multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
-    // // Download the image from the internet
-    // final String imageUrl =
-    //     'https://userscontent2.emaze.com/images/df500937-33a0-41db-bc2d-94b9defdbb62/ba63bc5c-b364-4317-bfd6-c843b5275680.jpg';
-    // http.Response imageResponse = await http.get(Uri.parse(imageUrl));
+      // Add headers
+      request.headers['api'] = ApiConstants.apiKey;
+      request.headers['user'] = ApiConstants.user;
 
-    // Create a multipart request
-    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+      // Add image file to the request
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        resizedImageFile.path,
+      ));
 
-    // Add headers
-    request.headers['api'] = apiKey;
-    request.headers['user'] = user;
+      // Send the request
+      http.StreamedResponse response = await request.send();
 
-    // Add fields and files to the request
-    request.files.add(http.MultipartFile.fromBytes(
-      'image',
-      await imageFile.readAsBytes(),
-      filename: imageFile.path.split('/').last,
-    ));
+      // Get the response body
+      String responseBody = await response.stream.bytesToString();
 
-    // // Add image file to the request
-    // request.files.add(http.MultipartFile.fromBytes(
-    //   'image',
-    //   imageResponse.bodyBytes,
-    //   filename: 'image.jpg',
-    // ));
+      // Parse the response JSON
+      Map<String, dynamic> jsonResponse = json.decode(responseBody);
 
-    // Send the request
-    http.StreamedResponse response = await request.send();
+      String message = jsonResponse['msg'];
+      String username = jsonResponse['user'];
 
-    // Get the response body
-    String responseBody = await response.stream.bytesToString();
-
-    // Parse the response JSON
-    Map<String, dynamic> jsonResponse = json.decode(responseBody);
-
-    // Get the message from the response
-    String message = jsonResponse['msg'];
-
-    // Check the response status
-    if (response.statusCode == 200) {
-      // Show the message in the dialog
-      _showResponseDialog(message);
-    } else {
-      // Show the error response message
-      _showResponseDialog('Verification failed: $message');
+      // Check the response status
+      if (response.statusCode == 200) {
+        // Show the message in the dialog
+        _showResponseDialog('$username: $message');
+        // Reset _capturedImage to null after successful verification
+        setState(() {
+          _capturedImage = null;
+        });
+        // Delete the image file after sending it to the API
+        await resizedImageFile.delete();
+      } else {
+        // Show the error response message
+        _showResponseDialog(message);
+      }
+    } catch (e) {
+      // Show error dialog
+      _showResponseDialog('Error: $e');
     }
+  }
+
+  Future<File> _resizeImage(File imageFile) async {
+    // Read image bytes
+    final Uint8List bytes = await imageFile.readAsBytes();
+
+    // Decode image
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) {
+      throw Exception('Failed to decode image.');
+    }
+
+    // Resize image
+    final img.Image resizedImage = img.copyResize(image, width: 800);
+
+    // Write resized image to a file
+    final File resizedFile =
+        File('${(await getTemporaryDirectory()).path}/resized_image.jpg');
+    await resizedFile.writeAsBytes(img.encodeJpg(resizedImage));
+
+    return resizedFile;
   }
 }

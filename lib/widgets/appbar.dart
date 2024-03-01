@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ientrada_new/screens/login_screen.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   const MyAppBar({super.key});
@@ -17,20 +18,6 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
           height: 25,
         ),
         actions: [
-          // Dark mode icon
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.purple[50],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: IconButton(
-              icon: Icon(Icons.dark_mode_rounded),
-              color: Colors.purple,
-              onPressed: () {},
-            ),
-          ),
-
-          SizedBox(width: 5),
           // Logout button
           Container(
             decoration: BoxDecoration(
@@ -40,7 +27,12 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: IconButton(
               icon: Icon(Icons.logout),
               color: Colors.purple,
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              },
             ),
           ),
         ],
