@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/widgets.dart';
 import 'package:ientrada_new/constants/api.dart';
+import 'package:ientrada_new/constants/color.dart';
 import 'package:ientrada_new/main.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:ientrada_new/utils/dialog.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'package:http/http.dart' as http;
@@ -58,141 +60,152 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  Future<void> _pickImageFromGallery() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        _capturedImage = XFile(pickedFile.path);
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Text field for ID
-              Padding(
-                padding: const EdgeInsets.all(16.0),
+      body: Stack(
+        children: [
+          // Camera preview
+          if (_controller.value.isInitialized)
+            Positioned.fill(
+              child: AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: _capturedImage == null
+                    ? CameraPreview(_controller)
+                    : Image.file(File(_capturedImage!.path)),
+              ),
+            ),
+
+          // Back arrow button
+          if (_capturedImage != null)
+            Positioned(
+              top: 45,
+              left: 10,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _capturedImage = null;
+                  });
+                },
                 child: Container(
-                  color: Colors.grey[100],
-                  child: TextFormField(
-                    controller: _userIdController,
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                      labelText: 'Enter Unique ID',
-                      border: InputBorder.none,
-                    ),
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.black,
                   ),
                 ),
               ),
+            ),
 
-              // Camera preview
-              Center(
-                child: Container(
-                  height: 500,
-                  child: _capturedImage == null
-                      ? CameraPreview(_controller)
-                      : Image.file(File(_capturedImage!.path)),
+          // Bottom container
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: 200,
+              padding: const EdgeInsets.all(40.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20.0),
+                  topRight: Radius.circular(20.0),
                 ),
               ),
-
-              // Buttons
-              Column(
+              child: Column(
                 children: [
-                  // Capture image button
-                  Center(
-                    child: Container(
-                      child: MaterialButton(
-                        onPressed: _pickImageFromCamera,
-                        color: Colors.purple,
-                        child: const Text(
-                          'Capture Image',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
+                  // Text field for ID
+                  Container(
+                    width: double.infinity,
+                    color: Colors.grey[100],
+                    child: TextFormField(
+                      controller: _userIdController,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                        labelText: 'Enter Unique ID',
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
 
-                  // Pick image from gallery button
-                  Center(
-                    child: Container(
+                  SizedBox(height: 10),
+
+                  // Register button
+                  SizedBox(
+                    width: double.infinity, // Expand the button to full width
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
                       child: MaterialButton(
-                        onPressed: _pickImageFromGallery,
-                        color: Colors.purple,
+                        onPressed: () {
+                          _registerUser();
+                        },
+                        color: AppColors.secondary,
                         child: const Text(
-                          'Pick Image from Gallery',
+                          'Register',
                           style: TextStyle(
                             color: Colors.white,
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-
-                  // Reset captured image button
-                  if (_capturedImage != null)
-                    Center(
-                      child: Container(
-                        child: MaterialButton(
-                          onPressed: () {
-                            setState(() {
-                              _capturedImage = null;
-                            });
-                          },
-                          color: Colors.purple,
-                          child: const Text(
-                            'Back to Camera',
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  // Verify button
-                  MaterialButton(
-                    onPressed: () {
-                      _registerUser();
-                    },
-                    color: Colors.purple,
-                    child: const Text(
-                      'Register',
-                      style: TextStyle(
-                        color: Colors.white,
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+
+          // Camera button
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 170,
+            child: Center(
+              child: GestureDetector(
+                onTap: _pickImageFromCamera,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3.0),
+                  ),
+                  child: Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 35,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Future<void> _registerUser() async {
-    // Check if the user ID is provided
     if (_userIdController.text.isEmpty) {
-      _showResponseDialog('User ID not provided.');
+      DialogUtils.showResponseDialog(
+          context, ResponseType.Invalid, 'User ID Not Provided');
       return;
     }
 
     if (_capturedImage == null) {
-      _showResponseDialog('Please capture an image first.');
+      DialogUtils.showResponseDialog(
+          context, ResponseType.Invalid, 'Please Capture an Image First');
       return;
     }
+
+    // Disable the register button to prevent multiple clicks
+    setState(() {});
+
+    // Show the loading indicator
+    DialogUtils.showLoadingDialog(context, 'Registering user...');
 
     // Prepare the request body
     final String userId = _userIdController.text;
@@ -231,51 +244,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Get the message from the response
       final message = jsonResponse['msg'];
 
-      // Check the response status
+      // Re-enable the register button
+      setState(() {});
+
+      // Close the loading indicator dialog
+      Navigator.of(context).pop();
+
       if (sendResponse.statusCode == 200) {
         // Registration successful
-        _showResponseDialog('$message');
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Success, '$message');
+
         // Reset _capturedImage to null after successful registration
         setState(() {
           _capturedImage = null;
         });
+
         // Delete the image file after sending it to the API
         await resizedImageFile.delete();
       } else {
         // Registration failed
-        _showResponseDialog('$message');
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Failed, '$message');
       }
     } catch (e) {
       // Handle any errors that occurred during the process
-      _showResponseDialog('Error: $e');
-    }
-  }
-
-  Future<void> _showResponseDialog(String message) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Registration Status'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text(message),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+      DialogUtils.showResponseDialog(context, ResponseType.Failed, '$e');
+    } finally {}
   }
 
   Future<File> _resizeImage(File imageFile) async {
@@ -314,25 +309,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
   }
-
-  // Future<File> _resizeImage(File imageFile) async {
-  //   // Read image bytes
-  //   final Uint8List bytes = await imageFile.readAsBytes();
-
-  //   // Decode image
-  //   img.Image? image = img.decodeImage(bytes);
-  //   if (image == null) {
-  //     throw Exception('Failed to decode image.');
-  //   }
-
-  //   // Resize image
-  //   final img.Image resizedImage = img.copyResize(image, width: 800);
-
-  //   // Write resized image to a file
-  //   final File resizedFile =
-  //       File('${(await getTemporaryDirectory()).path}/resized_image.jpg');
-  //   await resizedFile.writeAsBytes(img.encodeJpg(resizedImage));
-
-  //   return resizedFile;
-  // }
 }

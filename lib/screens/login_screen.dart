@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ientrada_new/constants/api.dart';
 import 'package:ientrada_new/screens/home_screen.dart';
+import 'package:ientrada_new/screens/security_screen.dart';
+import 'package:ientrada_new/utils/dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -129,14 +131,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       String enteredApiKey = apiKeyController.text;
                       if (enteredUser == ApiConstants.user &&
                           enteredApiKey == ApiConstants.apiKey) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomeScreen()),
-                        );
+                        if (selectedPage == 'Admin Page') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => HomeScreen()),
+                          );
+                        } else if (selectedPage == 'Security Page') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SecurityScreen()),
+                          );
+                        }
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Invalid Login')),
-                        );
+                        DialogUtils.showResponseDialog(
+                            context, ResponseType.Invalid, 'Invalid Login');
                       }
                     },
                     style: ElevatedButton.styleFrom(

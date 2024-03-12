@@ -1,24 +1,26 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/material.dart';
+
 import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ientrada_new/constants/api.dart';
-import 'package:ientrada_new/constants/color.dart';
-import 'package:ientrada_new/utils/dialog.dart';
-import 'package:http/http.dart' as http;
 import 'package:ientrada_new/main.dart';
+import 'package:ientrada_new/utils/dialog.dart';
+import 'package:ientrada_new/widgets/appbar.dart';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 
-class VerifyScreen extends StatefulWidget {
-  const VerifyScreen({Key? key}) : super(key: key);
+class SecurityScreen extends StatefulWidget {
+  const SecurityScreen({Key? key}) : super(key: key);
 
   @override
-  _VerifyScreenState createState() => _VerifyScreenState();
+  _SecurityScreenState createState() => _SecurityScreenState();
 }
 
-class _VerifyScreenState extends State<VerifyScreen> {
+class _SecurityScreenState extends State<SecurityScreen> {
   late CameraController _controller;
   XFile? _capturedImage;
   final String apiUrl =
@@ -61,6 +63,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: MyAppBar(),
       body: Stack(
         children: [
           // Camera preview
@@ -77,7 +80,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
           // Back arrow button
           if (_capturedImage != null)
             Positioned(
-              top: 45,
+              top: 20,
               left: 10,
               child: GestureDetector(
                 onTap: () {
@@ -105,8 +108,8 @@ class _VerifyScreenState extends State<VerifyScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              height: 200,
-              padding: const EdgeInsets.all(75.0),
+              height: 150,
+              padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -114,20 +117,52 @@ class _VerifyScreenState extends State<VerifyScreen> {
                   topRight: Radius.circular(20.0),
                 ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: MaterialButton(
-                  onPressed: () {
-                    _verifyUser();
-                  },
-                  color: AppColors.secondary,
-                  child: const Text(
-                    'Verify',
-                    style: TextStyle(
-                      color: Colors.white,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // IN button
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: MaterialButton(
+                          onPressed: () {
+                            _verifyUserIn();
+                          },
+                          color: Colors.blue,
+                          child: const Text(
+                            'IN',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  // OUT button
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: MaterialButton(
+                          onPressed: () {
+                            _verifyUserOut();
+                          },
+                          color: Colors.purple,
+                          child: const Text(
+                            'OUT',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -136,7 +171,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
           Positioned(
             left: 0,
             right: 0,
-            bottom: 170,
+            bottom: 120,
             child: Center(
               child: GestureDetector(
                 onTap: _pickImageFromCamera,
@@ -144,7 +179,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: Colors.purple,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3.0),
                   ),
@@ -162,10 +197,10 @@ class _VerifyScreenState extends State<VerifyScreen> {
     );
   }
 
-  Future<void> _verifyUser() async {
+  Future<void> _verifyUserIn() async {
     if (_capturedImage == null) {
       DialogUtils.showResponseDialog(
-          context, ResponseType.Invalid, 'Please capture an image first');
+          context, ResponseType.Invalid, 'Please capture an image first.');
       return;
     }
 
@@ -186,7 +221,88 @@ class _VerifyScreenState extends State<VerifyScreen> {
       // Add headers
       request.headers['api'] = ApiConstants.apiKey;
       request.headers['user'] = ApiConstants.user;
-      request.headers['other'] = 'n';
+      request.headers['other'] = 'I';
+
+      // Add image file to the request
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        resizedImageFile.path,
+      ));
+
+      // Send the request
+      http.StreamedResponse response = await request.send();
+
+      // Get the response body
+      String responseBody = await response.stream.bytesToString();
+
+      // Parse the response JSON
+      Map<String, dynamic> jsonResponse = json.decode(responseBody);
+
+      // Re-enable the register button
+      setState(() {});
+
+      // Close the loading indicator dialog
+      Navigator.of(context).pop();
+
+      // Check if the JSON response contains the 'msg' and 'user' keys
+      if (jsonResponse.containsKey('msg2') &&
+          jsonResponse.containsKey('user')) {
+        String message = jsonResponse['msg2'];
+        String username = jsonResponse['user'];
+
+        // Check the response status
+        if (response.statusCode == 200) {
+          // Show the message in the dialog
+          DialogUtils.showResponseDialog(
+              context, ResponseType.Success, '$username $message');
+
+          // Reset _capturedImage to null after successful verification
+          setState(() {
+            _capturedImage = null;
+          });
+
+          // Delete the image file after sending it to the API
+          await resizedImageFile.delete();
+        } else {
+          // Show the error response message
+          DialogUtils.showResponseDialog(context, ResponseType.Failed, message);
+        }
+      } else {
+        // Show an error message if the response format is unexpected
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Invalid, 'Face Not Detected');
+      }
+    } catch (e) {
+      // Show error dialog
+      DialogUtils.showResponseDialog(context, ResponseType.Failed, 'Error: $e');
+    }
+  }
+
+  Future<void> _verifyUserOut() async {
+    if (_capturedImage == null) {
+      DialogUtils.showResponseDialog(
+          context, ResponseType.Invalid, 'Please capture an image first.');
+      return;
+    }
+
+    // Disable the register button to prevent multiple clicks
+    setState(() {});
+
+    // Show loading dialog
+    DialogUtils.showLoadingDialog(context, 'Verifying user...');
+
+    try {
+      // Resize image to a consistent resolution
+      final File resizedImageFile =
+          await _resizeImage(File(_capturedImage!.path));
+
+      // Create a multipart request
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+      // Add headers
+      request.headers['api'] = ApiConstants.apiKey;
+      request.headers['user'] = ApiConstants.user;
+      request.headers['other'] = 'O';
 
       // Add image file to the request
       request.files.add(await http.MultipartFile.fromPath(
