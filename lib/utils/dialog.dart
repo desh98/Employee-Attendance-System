@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ientrada_new/constants/color.dart';
 
 enum ResponseType {
   Success,
@@ -15,11 +16,11 @@ class DialogUtils {
         return Dialog(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 CircularProgressIndicator(),
-                SizedBox(width: 16.0),
+                SizedBox(height: 16.0),
                 Text(loadingText),
               ],
             ),
@@ -35,24 +36,24 @@ class DialogUtils {
     String message,
   ) {
     IconData icon;
-    Color backgroundColor;
-    Color iconColor; // Add this line to hold the color of the icon
+    // Color backgroundColor;
+    Color iconColor;
 
     switch (type) {
       case ResponseType.Success:
         icon = Icons.check_circle;
-        backgroundColor = Colors.green[100]!;
-        iconColor = Color.fromARGB(255, 0, 235, 8);
+        // backgroundColor = Colors.green[100]!;
+        iconColor = Color.fromARGB(255, 2, 177, 8);
         break;
       case ResponseType.Failed:
         icon = Icons.error;
-        backgroundColor = Colors.red[100]!;
+        // backgroundColor = Colors.red[100]!;
         iconColor = Colors.red;
         break;
       case ResponseType.Invalid:
         icon = Icons.warning;
-        backgroundColor = Colors.yellow[100]!;
-        iconColor = const Color.fromARGB(255, 173, 156, 0);
+        // backgroundColor = Colors.yellow[100]!;
+        iconColor = Color.fromARGB(255, 248, 226, 24);
         break;
     }
 
@@ -61,14 +62,14 @@ class DialogUtils {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: backgroundColor,
+          backgroundColor: AppColors.white,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(
                 icon,
                 size: 50,
-                color: iconColor, // Use the iconColor variable here
+                color: iconColor,
               ),
               SizedBox(height: 20),
               Text(
