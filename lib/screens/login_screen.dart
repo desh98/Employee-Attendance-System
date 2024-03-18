@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:ientrada_new/constants/api.dart';
 import 'package:ientrada_new/constants/color.dart';
 import 'package:ientrada_new/screens/home_screen.dart';
 import 'package:ientrada_new/screens/security_screen.dart';
 import 'package:ientrada_new/utils/dialog.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -14,6 +16,52 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController userController = TextEditingController();
   final TextEditingController apiKeyController = TextEditingController();
   String selectedPage = 'Admin Page';
+  final String apiUrl = '${ApiConstants.apiUrl}${ApiConstants.login}';
+
+  Future<void> login(String user, String apiKey) async {
+    try {
+      // Create a POST request
+      var response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'accept': 'application/json',
+          'api': apiKey,
+          'user': user,
+        },
+      );
+
+      // Check the status code of the response
+      if (response.statusCode == 200) {
+        // If successful, navigate to the appropriate page
+        final jsonData = json.decode(response.body);
+        if (jsonData['login'] == true) {
+          if (selectedPage == 'Admin Page') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          } else if (selectedPage == 'Security Page') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SecurityScreen()),
+            );
+          }
+        } else {
+          // Show invalid login message
+          DialogUtils.showResponseDialog(
+              context, ResponseType.Invalid, 'Invalid Login');
+        }
+      } else {
+        // Show error message
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Failed, 'Error occurred. Please try again.');
+      }
+    } catch (e) {
+      // Show error message
+      DialogUtils.showResponseDialog(
+          context, ResponseType.Failed, 'Error occurred. Please try again.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,25 +220,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       String enteredUser = userController.text;
                       String enteredApiKey = apiKeyController.text;
-                      if (enteredUser == ApiConstants.user &&
-                          enteredApiKey == ApiConstants.apiKey) {
-                        if (selectedPage == 'Admin Page') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => HomeScreen()),
-                          );
-                        } else if (selectedPage == 'Security Page') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SecurityScreen()),
-                          );
-                        }
-                      } else {
-                        DialogUtils.showResponseDialog(
-                            context, ResponseType.Invalid, 'Invalid Login');
-                      }
+                      ApiConstants.user = enteredUser;
+                      ApiConstants.apiKey = enteredApiKey;
+                      login(enteredUser, enteredApiKey);
+                      // if (enteredUser == ApiConstants.user &&
+                      //     enteredApiKey == ApiConstants.apiKey) {
+                      //   if (selectedPage == 'Admin Page') {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //           builder: (context) => HomeScreen()),
+                      //     );
+                      //   } else if (selectedPage == 'Security Page') {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //           builder: (context) => SecurityScreen()),
+                      //     );
+                      //   }
+                      // } else {
+                      //   DialogUtils.showResponseDialog(
+                      //       context, ResponseType.Invalid, 'Invalid Login');
+                      // }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.purple,

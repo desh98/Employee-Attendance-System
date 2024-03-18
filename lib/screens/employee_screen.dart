@@ -47,7 +47,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
       // Get the response body
       String responseBody = await response.stream.bytesToString();
 
-      // Parse the response JSON based on dataType
+      // Parse the response JSON
       setState(() {
         employeeData = json.decode(responseBody);
       });
@@ -196,7 +196,7 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '$regCount | $userCount',
+                                      '$userCount | $regCount',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 20,
