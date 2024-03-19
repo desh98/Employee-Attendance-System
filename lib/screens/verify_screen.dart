@@ -118,7 +118,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: MaterialButton(
                   onPressed: () {
-                    _verifyUser();
+                    _verifyUser('n');
                   },
                   color: AppColors.secondary,
                   child: const Text(
@@ -162,7 +162,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
     );
   }
 
-  Future<void> _verifyUser() async {
+  Future<void> _verifyUser(String other) async {
     if (_capturedImage == null) {
       DialogUtils.showResponseDialog(
           context, ResponseType.Invalid, 'Please capture an image first');
@@ -186,7 +186,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
       // Add headers
       request.headers['api'] = ApiConstants.apiKey;
       request.headers['user'] = ApiConstants.user;
-      request.headers['other'] = 'n';
+      request.headers['other'] = other;
 
       // Add image file to the request
       request.files.add(await http.MultipartFile.fromPath(

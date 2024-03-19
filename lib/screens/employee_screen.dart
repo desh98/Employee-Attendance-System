@@ -289,7 +289,6 @@ class _EmployeeScreenState extends State<EmployeeScreen> {
             expand: true,
             builder: (context, scrollController) {
               return Container(
-                // height: MediaQuery.of(context).size.height,
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.only(

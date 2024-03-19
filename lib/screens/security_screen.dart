@@ -128,7 +128,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         borderRadius: BorderRadius.circular(20),
                         child: MaterialButton(
                           onPressed: () {
-                            _verifyUserIn();
+                            _verifyUser('i');
                           },
                           color: Colors.blue,
                           child: const Text(
@@ -149,7 +149,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                         borderRadius: BorderRadius.circular(20),
                         child: MaterialButton(
                           onPressed: () {
-                            _verifyUserOut();
+                            _verifyUser('o');
                           },
                           color: Colors.purple,
                           child: const Text(
@@ -197,7 +197,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     );
   }
 
-  Future<void> _verifyUserIn() async {
+  Future<void> _verifyUser(String other) async {
     if (_capturedImage == null) {
       DialogUtils.showResponseDialog(
           context, ResponseType.Invalid, 'Please capture an image first.');
@@ -221,88 +221,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
       // Add headers
       request.headers['api'] = ApiConstants.apiKey;
       request.headers['user'] = ApiConstants.user;
-      request.headers['other'] = 'I';
-
-      // Add image file to the request
-      request.files.add(await http.MultipartFile.fromPath(
-        'image',
-        resizedImageFile.path,
-      ));
-
-      // Send the request
-      http.StreamedResponse response = await request.send();
-
-      // Get the response body
-      String responseBody = await response.stream.bytesToString();
-
-      // Parse the response JSON
-      Map<String, dynamic> jsonResponse = json.decode(responseBody);
-
-      // Re-enable the register button
-      setState(() {});
-
-      // Close the loading indicator dialog
-      Navigator.of(context).pop();
-
-      // Check if the JSON response contains the 'msg' and 'user' keys
-      if (jsonResponse.containsKey('msg2') &&
-          jsonResponse.containsKey('user')) {
-        String message = jsonResponse['msg2'];
-        String username = jsonResponse['user'];
-
-        // Check the response status
-        if (response.statusCode == 200) {
-          // Show the message in the dialog
-          DialogUtils.showResponseDialog(
-              context, ResponseType.Success, '$username $message');
-
-          // Reset _capturedImage to null after successful verification
-          setState(() {
-            _capturedImage = null;
-          });
-
-          // Delete the image file after sending it to the API
-          await resizedImageFile.delete();
-        } else {
-          // Show the error response message
-          DialogUtils.showResponseDialog(context, ResponseType.Failed, message);
-        }
-      } else {
-        // Show an error message if the response format is unexpected
-        DialogUtils.showResponseDialog(
-            context, ResponseType.Invalid, 'Face Not Detected');
-      }
-    } catch (e) {
-      // Show error dialog
-      DialogUtils.showResponseDialog(context, ResponseType.Failed, 'Error: $e');
-    }
-  }
-
-  Future<void> _verifyUserOut() async {
-    if (_capturedImage == null) {
-      DialogUtils.showResponseDialog(
-          context, ResponseType.Invalid, 'Please capture an image first.');
-      return;
-    }
-
-    // Disable the register button to prevent multiple clicks
-    setState(() {});
-
-    // Show loading dialog
-    DialogUtils.showLoadingDialog(context, 'Verifying user...');
-
-    try {
-      // Resize image to a consistent resolution
-      final File resizedImageFile =
-          await _resizeImage(File(_capturedImage!.path));
-
-      // Create a multipart request
-      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-
-      // Add headers
-      request.headers['api'] = ApiConstants.apiKey;
-      request.headers['user'] = ApiConstants.user;
-      request.headers['other'] = 'O';
+      request.headers['other'] = other;
 
       // Add image file to the request
       request.files.add(await http.MultipartFile.fromPath(

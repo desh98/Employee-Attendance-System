@@ -118,7 +118,7 @@ class _EntranceScreenState extends State<EntranceScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: MaterialButton(
                   onPressed: () {
-                    _verifyUserIn();
+                    _verifyUser('i');
                   },
                   color: AppColors.secondary,
                   child: const Text(
@@ -162,7 +162,7 @@ class _EntranceScreenState extends State<EntranceScreen> {
     );
   }
 
-  Future<void> _verifyUserIn() async {
+  Future<void> _verifyUser(String other) async {
     if (_capturedImage == null) {
       DialogUtils.showResponseDialog(
           context, ResponseType.Invalid, 'Please capture an image first.');
@@ -186,7 +186,7 @@ class _EntranceScreenState extends State<EntranceScreen> {
       // Add headers
       request.headers['api'] = ApiConstants.apiKey;
       request.headers['user'] = ApiConstants.user;
-      request.headers['other'] = 'I';
+      request.headers['other'] = other;
 
       // Add image file to the request
       request.files.add(await http.MultipartFile.fromPath(
