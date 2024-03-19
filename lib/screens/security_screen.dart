@@ -4,9 +4,11 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ientrada_new/constants/api.dart';
+import 'package:ientrada_new/constants/color.dart';
 import 'package:ientrada_new/main.dart';
 import 'package:ientrada_new/utils/dialog.dart';
 import 'package:ientrada_new/widgets/appbar.dart';
+import 'package:ientrada_new/widgets/time.dart';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -71,9 +73,16 @@ class _SecurityScreenState extends State<SecurityScreen> {
             Positioned.fill(
               child: AspectRatio(
                 aspectRatio: _controller.value.aspectRatio,
-                child: _capturedImage == null
-                    ? CameraPreview(_controller)
-                    : Image.file(File(_capturedImage!.path)),
+                child: Stack(
+                  children: [
+                    // Camera preview
+                    _capturedImage == null
+                        ? CameraPreview(_controller)
+                        : Image.file(File(_capturedImage!.path)),
+                    // Current time widget
+                    CurrentTime(),
+                  ],
+                ),
               ),
             ),
 
@@ -130,7 +139,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           onPressed: () {
                             _verifyUser('i');
                           },
-                          color: Colors.blue,
+                          color: AppColors.secondary,
                           child: const Text(
                             'IN',
                             style: TextStyle(
@@ -151,7 +160,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                           onPressed: () {
                             _verifyUser('o');
                           },
-                          color: Colors.purple,
+                          color: AppColors.primary,
                           child: const Text(
                             'OUT',
                             style: TextStyle(
@@ -179,7 +188,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.purple,
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3.0),
                   ),
