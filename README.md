@@ -59,7 +59,7 @@ To get started with Ientrada, follow these steps:
 
 bash
     
-    git clone https://github.com/desh98/desh98/Ientrada-Face-Detection-App.git
+    git clone https://github.com/desh98/Ientrada-App.git
 
 
 
@@ -67,7 +67,7 @@ bash
 
 bash
 
-    cd Ientrada
+    cd Ientrada-App
     flutter pub get
 
 
