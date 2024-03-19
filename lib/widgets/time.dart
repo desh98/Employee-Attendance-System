@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ientrada_new/constants/color.dart';
 import 'package:intl/intl.dart';
 
 class CurrentTime extends StatefulWidget {
