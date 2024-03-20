@@ -66,24 +66,24 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: Colors.grey[300],
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.only(right: 20.0, left: 20, bottom: 20),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Image.asset(
-                  'assets/login.png',
-                  width: 400,
+                  'assets/log.png',
+                  width: 300,
                 ),
-                SizedBox(height: 10.0),
+                // SizedBox(height: 10.0),
                 Text(
                   'Sign in',
                   style: TextStyle(
-                    color: AppColors.primaryDark,
+                    color: AppColors.secondaryDark,
                     fontSize: 24.0,
                     fontWeight: FontWeight.bold,
                   ),
@@ -95,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(5.0),
                           boxShadow: [
                             BoxShadow(
@@ -109,12 +110,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: userController,
                           decoration: InputDecoration(
                             hintText: 'User',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: InputBorder.none, // Remove border
+                            filled: false,
+                            border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 12.0, horizontal: 16.0),
-                            hintStyle: TextStyle(color: AppColors.textSub),
+                            hintStyle: TextStyle(
+                                color: AppColors.textSub,
+                                fontWeight: FontWeight.w400),
                             prefixIcon: Icon(
                               Icons.person,
                               color: AppColors.textSub,
@@ -125,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(height: 10.0),
                       Container(
                         decoration: BoxDecoration(
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(5.0),
                           boxShadow: [
                             BoxShadow(
@@ -140,12 +143,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: 'API Key',
-                            filled: true,
-                            fillColor: Colors.white,
+                            filled: false,
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.symmetric(
                                 vertical: 12.0, horizontal: 16.0),
-                            hintStyle: TextStyle(color: AppColors.textSub),
+                            hintStyle: TextStyle(
+                                color: AppColors.textSub,
+                                fontWeight: FontWeight.w400),
                             prefixIcon: Icon(
                               Icons.vpn_key,
                               color: AppColors.textSub,
@@ -190,7 +194,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     children: [
                                       Text(
                                         value,
-                                        style: TextStyle(color: Colors.grey),
+                                        style: TextStyle(
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w400),
                                       ),
                                     ],
                                   ),
@@ -223,30 +229,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ApiConstants.user = enteredUser;
                       ApiConstants.apiKey = enteredApiKey;
                       login(enteredUser, enteredApiKey);
-                      // if (enteredUser == ApiConstants.user &&
-                      //     enteredApiKey == ApiConstants.apiKey) {
-                      //   if (selectedPage == 'Admin Page') {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //           builder: (context) => HomeScreen()),
-                      //     );
-                      //   } else if (selectedPage == 'Security Page') {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //           builder: (context) => SecurityScreen()),
-                      //     );
-                      //   }
-                      // } else {
-                      //   DialogUtils.showResponseDialog(
-                      //       context, ResponseType.Invalid, 'Invalid Login');
-                      // }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
+                      backgroundColor: AppColors.secondaryDark,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
                       padding:
-                          EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                          EdgeInsets.symmetric(horizontal: 135, vertical: 15),
                     ),
                     child: Text(
                       'Sign In',

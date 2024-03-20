@@ -235,7 +235,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
       } else {
         // Show an error message if the response format is unexpected
         DialogUtils.showResponseDialog(
-            context, ResponseType.Invalid, 'Face Not Detected');
+            context, ResponseType.Invalid, jsonResponse['msg']);
       }
     } catch (e) {
       // Show error dialog
