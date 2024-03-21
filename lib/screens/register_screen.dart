@@ -120,25 +120,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   // Text field for ID
                   Container(
-                    width: double.infinity,
-                    color: Colors.grey[100],
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(5.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 1,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
                     child: TextFormField(
                       controller: _userIdController,
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        labelText: 'Enter Unique ID',
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: 'Enter Unique ID',
+                        filled: false,
                         border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                            vertical: 12.0, horizontal: 16.0),
+                        hintStyle: TextStyle(
+                            color: AppColors.textSub,
+                            fontWeight: FontWeight.w400),
+                        prefixIcon: Icon(
+                          Icons.person,
+                          color: AppColors.textSub,
+                        ),
                       ),
                     ),
                   ),
 
-                  SizedBox(height: 10),
+                  SizedBox(height: 15),
 
                   // Register button
                   SizedBox(
-                    width: double.infinity, // Expand the button to full width
+                    width: double.infinity,
+                    height: 50,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(10),
                       child: MaterialButton(
                         onPressed: () {
                           _registerUser();
@@ -268,8 +289,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             context, ResponseType.Failed, '$message');
       }
     } catch (e) {
-      // Handle any errors that occurred during the process
-      DialogUtils.showResponseDialog(context, ResponseType.Failed, '$e');
+      if (e.toString().contains('<html>')) {
+        DialogUtils.showResponseDialog(
+          context,
+          ResponseType.Failed,
+          'Connection Error. Please Try Again Later!',
+        );
+      } else {
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Failed, 'Error: $e');
+      }
     } finally {}
   }
 

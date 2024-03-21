@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:ientrada_new/constants/api.dart';
 import 'package:ientrada_new/constants/color.dart';
 import 'package:ientrada_new/main.dart';
@@ -130,18 +132,20 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // IN button
-                  Expanded(
+                  SizedBox(
+                    height: 50,
+                    width: 170,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(10),
                         child: MaterialButton(
                           onPressed: () {
                             _verifyUser('i');
                           },
                           color: AppColors.secondary,
                           child: const Text(
-                            'IN',
+                            'CHECK IN',
                             style: TextStyle(
                               color: Colors.white,
                             ),
@@ -151,18 +155,20 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     ),
                   ),
                   // OUT button
-                  Expanded(
+                  SizedBox(
+                    height: 50,
+                    width: 170,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(10),
                         child: MaterialButton(
                           onPressed: () {
                             _verifyUser('o');
                           },
                           color: AppColors.primary,
                           child: const Text(
-                            'OUT',
+                            'CHECK OUT',
                             style: TextStyle(
                               color: Colors.white,
                             ),
@@ -282,8 +288,16 @@ class _SecurityScreenState extends State<SecurityScreen> {
             context, ResponseType.Invalid, jsonResponse['msg']);
       }
     } catch (e) {
-      // Show error dialog
-      DialogUtils.showResponseDialog(context, ResponseType.Failed, 'Error: $e');
+      if (e.toString().contains('<html>')) {
+        DialogUtils.showResponseDialog(
+          context,
+          ResponseType.Failed,
+          'Connection Error. Please Try Again Later!',
+        );
+      } else {
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Failed, 'Error: $e');
+      }
     }
   }
 

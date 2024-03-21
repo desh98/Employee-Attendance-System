@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:ientrada_new/constants/api.dart';
 import 'package:ientrada_new/constants/color.dart';
 import 'package:ientrada_new/screens/home_screen.dart';
 import 'package:ientrada_new/screens/security_screen.dart';
 import 'package:ientrada_new/utils/dialog.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
@@ -19,45 +22,90 @@ class _LoginScreenState extends State<LoginScreen> {
   final String apiUrl = '${ApiConstants.apiUrl}${ApiConstants.login}';
 
   Future<void> login(String user, String apiKey) async {
-    try {
-      // Create a POST request
-      var response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'accept': 'application/json',
-          'api': apiKey,
-          'user': user,
+    LocationPermission permission =
+        await geolocator.Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await geolocator.Geolocator.requestPermission();
+      if (permission != LocationPermission.always &&
+          permission != LocationPermission.whileInUse) {
+        print(
+            'Location permission denied. Login cannot proceed with location data.');
+        return;
+      }
+    }
+
+    // Check if location service is enabled
+    bool isLocationServiceEnabled =
+        await geolocator.Geolocator.isLocationServiceEnabled();
+    if (!isLocationServiceEnabled) {
+      // Location service is disabled
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Location Service Disabled"),
+            content: Text("Please enable location services to use this app."),
+            actions: <Widget>[
+              TextButton(
+                child: Text("OK"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  // Open location settings
+                  geolocator.Geolocator.openLocationSettings();
+                },
+              ),
+            ],
+          );
         },
       );
+      return;
+    }
 
-      // Check the status code of the response
-      if (response.statusCode == 200) {
-        // If successful, navigate to the appropriate page
-        final jsonData = json.decode(response.body);
-        if (jsonData['login'] == true) {
-          if (selectedPage == 'Admin Page') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
-            );
-          } else if (selectedPage == 'Security Page') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SecurityScreen()),
-            );
-          }
-        } else {
-          // Show invalid login message
-          DialogUtils.showResponseDialog(
-              context, ResponseType.Invalid, 'Invalid Login');
+    // Get current location
+    geolocator.Position position;
+    try {
+      position = await geolocator.Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+    } on PlatformException catch (e) {
+      // Handle location service errors
+      print(
+          'Error getting location: ${e.toString()}. Login cannot proceed with location data.');
+      return;
+    }
+
+    // Create a POST request with lon and lat headers
+    var url = Uri.parse(apiUrl);
+    var response = await http.post(
+      url,
+      headers: {
+        'accept': 'application/json',
+        'api': apiKey,
+        'user': user,
+        'lon': position.longitude.toString(),
+        'lat': position.latitude.toString(),
+      },
+    );
+
+    // Handle the response
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      if (jsonData['login'] == true) {
+        if (selectedPage == 'Admin Page') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+          );
+        } else if (selectedPage == 'Security Page') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SecurityScreen()),
+          );
         }
       } else {
-        // Show error message
         DialogUtils.showResponseDialog(
-            context, ResponseType.Failed, 'Error occurred. Please try again.');
+            context, ResponseType.Invalid, 'Invalid Login');
       }
-    } catch (e) {
-      // Show error message
+    } else {
       DialogUtils.showResponseDialog(
           context, ResponseType.Failed, 'Error occurred. Please try again.');
     }

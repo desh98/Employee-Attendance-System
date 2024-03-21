@@ -115,7 +115,7 @@ class _ExitScreenState extends State<ExitScreen> {
                 ),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(10),
                 child: MaterialButton(
                   onPressed: () {
                     _verifyUser('o');
@@ -238,8 +238,16 @@ class _ExitScreenState extends State<ExitScreen> {
             context, ResponseType.Invalid, jsonResponse['msg']);
       }
     } catch (e) {
-      // Show error dialog
-      DialogUtils.showResponseDialog(context, ResponseType.Failed, 'Error: $e');
+      if (e.toString().contains('<html>')) {
+        DialogUtils.showResponseDialog(
+          context,
+          ResponseType.Failed,
+          'Connection Error. Please Try Again Later!',
+        );
+      } else {
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Failed, 'Error: $e');
+      }
     }
   }
 
