@@ -6,11 +6,11 @@ Ientrada is an employee entering and exiting system with face registration and v
 ## Features
 
 ### 1. Authentication
-The Ientrada application boasts a login page, serving as the gateway to its robust suite of features. This page acts as the first line of defense, requiring users to authenticate themselves before gaining access to the application. Through this authentication process, users are prompted to provide their credentials, including username and API key, ensuring that only authorized personnel can interact with the application's functionalities.
+The Ientrada application's login page serves as the initial access point to its suite of features, implementing advanced security measures for user authentication. Users are required to provide their username and API key to gain entry, ensuring access only for authorized personnel. Additionally, with user consent, the application tracks their current location during authentication, enhancing security and personalized user experience.
 <p align='center'>
-      <img src="https://github.com/desh98/Ientrada-Face-Detection-App/assets/73052432/8b8e8abe-0ddd-417a-af1a-a25f144a8979" width="200" />
-    <img src="https://github.com/desh98/Ientrada-Face-Detection-App/assets/73052432/fe1bf191-b0d6-4b93-b09e-2f210e197f78" width="200" />
+      <img src="https://github.com/desh98/Ientrada-App/assets/73052432/58409569-9351-4180-b0a1-07b01cad30ed" width="200" />
     </p>
+
 
 
 ### 2. Multiple Portals
@@ -30,15 +30,17 @@ Driving informed decision-making is the intuitive analytics dashboard offered by
 ### 4. Facial Registration
 One of the hallmark features of Ientrada is its streamlined facial registration process. With the integrated camera functionality, employees can effortlessly enroll in the system by capturing their facial data. This data is securely stored within the application's database, serving as a foundation for subsequent verification processes. 
 <p align='center'>
-      <img src="https://github.com/desh98/Ientrada-Face-Detection-App/assets/73052432/a74bcbe9-7605-4e2c-ad7c-bf9b0285a18d" width="200" />
+      <img src="https://github.com/desh98/Ientrada-App/assets/73052432/2e452018-e0fa-41ba-86ae-e77966a2bb38" width="200" />
     <img src="https://github.com/desh98/Ientrada-Face-Detection-App/assets/73052432/602df6b8-b53f-4fa6-bf04-2b13f607717b" width="200" />
     </p>
+
+
 
 
 ### 5. Facial Verification
 At the core of Ientrada's security infrastructure lies its robust facial verification system. Leveraging advanced facial recognition technology, the application swiftly verifies employees' identities by comparing their facial data against the stored records. With seamless verification capabilities, Ientrada offers a reliable method for tracking employee attendance.
 <p align='center'>
-    <img src="https://github.com/desh98/Ientrada-Face-Detection-App/assets/73052432/70216c04-78ce-492b-8968-2d68bd39de63" width="200" />
+    <img src="https://github.com/desh98/Ientrada-App/assets/73052432/a01b0f21-4bf1-4a04-9a31-fbadf2c5a887" width="200" />
     <img src="https://github.com/desh98/Ientrada-Face-Detection-App/assets/73052432/5de7d7a3-bb4f-4d70-9c9a-6a3be331f366" width="200" />
     </p>
 
