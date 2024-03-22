@@ -134,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: TextFormField(
                       controller: _userIdController,
-                      obscureText: true,
+                      obscureText: false,
                       decoration: InputDecoration(
                         hintText: 'Enter Unique ID',
                         filled: false,
