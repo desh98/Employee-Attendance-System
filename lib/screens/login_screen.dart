@@ -101,6 +101,9 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => SecurityScreen()),
           );
         }
+      } else if (jsonData['msg'] == 'Location Error.') {
+        DialogUtils.showResponseDialog(
+            context, ResponseType.Invalid, 'Invalid Location');
       } else {
         DialogUtils.showResponseDialog(
             context, ResponseType.Invalid, 'Invalid Login');
