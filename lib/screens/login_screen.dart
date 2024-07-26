@@ -102,11 +102,11 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else if (jsonData['msg'] == 'Location Error.') {
-        DialogUtils.showResponseDialog(
-            context, ResponseType.Invalid, 'Invalid Location');
+        DialogUtils.showResponseDialog(context, ResponseType.Invalid,
+            'Invalid Login\nLocation Error, Try Again');
       } else {
-        DialogUtils.showResponseDialog(
-            context, ResponseType.Invalid, 'Invalid Login');
+        DialogUtils.showResponseDialog(context, ResponseType.Invalid,
+            'Invalid Login\nIncorrect Credentials, Try Again');
       }
     } else {
       DialogUtils.showResponseDialog(
